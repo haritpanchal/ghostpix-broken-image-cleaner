@@ -1,5 +1,5 @@
 {
-	"name": "haritpanchal/broken-image-cleaner",
+	"name": "haritpanchal/ghostpix-broken-image-cleaner",
 	"description": "Find and safely remove images whose files are missing from the uploads folder, with review and undo.",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",

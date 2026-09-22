@@ -10,7 +10,7 @@
  *
  * Run it inside the local environment:
  *
- *     npx wp-env run cli wp eval-file wp-content/plugins/broken-image-cleaner/tests/admin-render.php
+ *     npx wp-env run cli wp eval-file wp-content/plugins/ghostpix-broken-image-cleaner/tests/admin-render.php
  *
  * @package BrokenImageCleaner
  */
@@ -55,10 +55,10 @@ Store::install();
 require_once ABSPATH . 'wp-admin/includes/screen.php';
 require_once ABSPATH . 'wp-admin/includes/template.php';
 require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
-require_once WP_PLUGIN_DIR . '/broken-image-cleaner/includes/class-list-table.php';
-require_once WP_PLUGIN_DIR . '/broken-image-cleaner/includes/class-admin.php';
+require_once WP_PLUGIN_DIR . '/ghostpix-broken-image-cleaner/includes/class-list-table.php';
+require_once WP_PLUGIN_DIR . '/ghostpix-broken-image-cleaner/includes/class-admin.php';
 
-set_current_screen( 'tools_page_broken-image-cleaner' );
+set_current_screen( 'tools_page_ghostpix-broken-image-cleaner' );
 
 // Seed one finding so the table has a row to draw.
 $post_id = wp_insert_post(
@@ -82,7 +82,7 @@ Store::record(
 	'<img src="/wp-content/uploads/2013/07/missing.jpg" />'
 );
 
-$_GET['page'] = 'broken-image-cleaner';
+$_GET['page'] = 'ghostpix-broken-image-cleaner';
 
 ob_start();
 Admin::render();

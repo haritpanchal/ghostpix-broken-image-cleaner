@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-SLUG="broken-image-cleaner"
+SLUG="ghostpix-broken-image-cleaner"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="${ROOT}/build"
 

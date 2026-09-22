@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name:       Broken Image Cleaner
- * Plugin URI:        https://github.com/haritpanchal/broken-image-cleaner
+ * Plugin Name:       Ghostpix Broken Image Cleaner
+ * Plugin URI:        https://github.com/haritpanchal/ghostpix-broken-image-cleaner
  * Description:       Finds images in post content whose files are missing from the uploads folder, and removes them safely — after review, with one-click undo.
  * Version:           1.0.0
  * Requires at least: 5.6
@@ -10,7 +10,7 @@
  * Author URI:        https://profiles.wordpress.org/haritpanchal/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       broken-image-cleaner
+ * Text Domain:       ghostpix-broken-image-cleaner
  *
  * @package BrokenImageCleaner
  */
@@ -45,7 +45,7 @@ function broken_image_cleaner_requirements_met() {
 function broken_image_cleaner_requirements_notice() {
 	printf(
 		'<div class="notice notice-error"><p>%s</p></div>',
-		esc_html__( 'Broken Image Cleaner requires PHP 7.4 or later and WordPress 5.6 or later. The plugin has not been loaded.', 'broken-image-cleaner' )
+		esc_html__( 'Ghostpix Broken Image Cleaner requires PHP 7.4 or later and WordPress 5.6 or later. The plugin has not been loaded.', 'ghostpix-broken-image-cleaner' )
 	);
 }
 

@@ -23,7 +23,7 @@ class Admin {
 	/**
 	 * Menu slug.
 	 */
-	const SLUG = 'broken-image-cleaner';
+	const SLUG = 'ghostpix-broken-image-cleaner';
 
 	/**
 	 * Nonce action for links and forms on this screen.
@@ -56,8 +56,8 @@ class Admin {
 	 */
 	public static function register_page() {
 		$hook = add_management_page(
-			__( 'Broken Images', 'broken-image-cleaner' ),
-			__( 'Broken Images', 'broken-image-cleaner' ),
+			__( 'Broken Images', 'ghostpix-broken-image-cleaner' ),
+			__( 'Broken Images', 'ghostpix-broken-image-cleaner' ),
 			Plugin::CAPABILITY,
 			self::SLUG,
 			array( __CLASS__, 'render' )
@@ -317,7 +317,7 @@ class Admin {
 	 */
 	public static function print_styles() {
 		wp_enqueue_style(
-			'broken-image-cleaner-admin',
+			'ghostpix-broken-image-cleaner-admin',
 			BROKEN_IMAGE_CLEANER_URL . 'assets/admin.css',
 			array(),
 			BROKEN_IMAGE_CLEANER_VERSION
@@ -331,7 +331,7 @@ class Admin {
 	 */
 	public static function render() {
 		if ( ! current_user_can( Plugin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this page.', 'broken-image-cleaner' ) );
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'ghostpix-broken-image-cleaner' ) );
 		}
 
 		$table = new List_Table();
@@ -340,7 +340,7 @@ class Admin {
 		$state = Scanner::state();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Broken Images', 'broken-image-cleaner' ) . '</h1>';
+		echo '<h1>' . esc_html__( 'Broken Images', 'ghostpix-broken-image-cleaner' ) . '</h1>';
 
 		self::render_notice();
 		self::render_scan_panel( $state );
@@ -374,16 +374,16 @@ class Admin {
 		}
 
 		$messages = array(
-			'scan_started'     => __( 'Scan started. Results will appear here as it works through your content.', 'broken-image-cleaner' ),
-			'scan_stopped'     => __( 'Scan stopped. Anything found so far has been kept.', 'broken-image-cleaner' ),
-			'cleared'          => __( 'All results cleared.', 'broken-image-cleaner' ),
-			'ignored'          => __( 'The selected images will be left alone.', 'broken-image-cleaner' ),
-			'unignored'        => __( 'The selected images have been moved back to Broken.', 'broken-image-cleaner' ),
-			'rechecked'        => __( 'Re-checked the selected images.', 'broken-image-cleaner' ),
-			'restored'         => __( 'The post has been restored to how it was before the clean-up.', 'broken-image-cleaner' ),
-			'undo_failed'      => __( 'That post could not be restored. The saved copy may have expired.', 'broken-image-cleaner' ),
-			'settings_saved'   => __( 'Settings saved.', 'broken-image-cleaner' ),
-			'nothing_selected' => __( 'No images were selected.', 'broken-image-cleaner' ),
+			'scan_started'     => __( 'Scan started. Results will appear here as it works through your content.', 'ghostpix-broken-image-cleaner' ),
+			'scan_stopped'     => __( 'Scan stopped. Anything found so far has been kept.', 'ghostpix-broken-image-cleaner' ),
+			'cleared'          => __( 'All results cleared.', 'ghostpix-broken-image-cleaner' ),
+			'ignored'          => __( 'The selected images will be left alone.', 'ghostpix-broken-image-cleaner' ),
+			'unignored'        => __( 'The selected images have been moved back to Broken.', 'ghostpix-broken-image-cleaner' ),
+			'rechecked'        => __( 'Re-checked the selected images.', 'ghostpix-broken-image-cleaner' ),
+			'restored'         => __( 'The post has been restored to how it was before the clean-up.', 'ghostpix-broken-image-cleaner' ),
+			'undo_failed'      => __( 'That post could not be restored. The saved copy may have expired.', 'ghostpix-broken-image-cleaner' ),
+			'settings_saved'   => __( 'Settings saved.', 'ghostpix-broken-image-cleaner' ),
+			'nothing_selected' => __( 'No images were selected.', 'ghostpix-broken-image-cleaner' ),
 		);
 
 		if ( 'removed' === $notice ) {
@@ -426,7 +426,7 @@ class Admin {
 				'Removed %1$s image from %2$s post.',
 				'Removed %1$s images from %2$s posts.',
 				(int) $report['images_removed'],
-				'broken-image-cleaner'
+				'ghostpix-broken-image-cleaner'
 			),
 			number_format_i18n( (int) $report['images_removed'] ),
 			number_format_i18n( (int) $report['posts_changed'] )
@@ -435,7 +435,7 @@ class Admin {
 		if ( ! empty( $report['skipped'] ) ) {
 			$message .= ' ' . sprintf(
 				/* translators: %s: number of images. */
-				_n( '%s was left alone.', '%s were left alone.', (int) $report['skipped'], 'broken-image-cleaner' ),
+				_n( '%s was left alone.', '%s were left alone.', (int) $report['skipped'], 'ghostpix-broken-image-cleaner' ),
 				number_format_i18n( (int) $report['skipped'] )
 			);
 		}
@@ -457,16 +457,16 @@ class Admin {
 	 * @return void
 	 */
 	private static function render_scan_panel( array $state ) {
-		echo '<div class="broken-image-cleaner-panel">';
+		echo '<div class="ghostpix-broken-image-cleaner-panel">';
 
 		if ( Scanner::is_running() ) {
 			printf(
 				'<p><strong>%s</strong> %s</p>',
-				esc_html__( 'Scan in progress.', 'broken-image-cleaner' ),
+				esc_html__( 'Scan in progress.', 'ghostpix-broken-image-cleaner' ),
 				esc_html(
 					sprintf(
 						/* translators: 1: posts scanned, 2: total posts. */
-						__( 'Checked %1$s of %2$s posts so far. Reload this page for an update.', 'broken-image-cleaner' ),
+						__( 'Checked %1$s of %2$s posts so far. Reload this page for an update.', 'ghostpix-broken-image-cleaner' ),
 						number_format_i18n( (int) $state['scanned'] ),
 						number_format_i18n( (int) $state['total'] )
 					)
@@ -476,7 +476,7 @@ class Admin {
 			printf(
 				'<a href="%s" class="button">%s</a>',
 				esc_url( self::action_url( 'scan_stop' ) ),
-				esc_html__( 'Stop scan', 'broken-image-cleaner' )
+				esc_html__( 'Stop scan', 'ghostpix-broken-image-cleaner' )
 			);
 		} else {
 			if ( $state['finished_at'] ) {
@@ -485,7 +485,7 @@ class Admin {
 					esc_html(
 						sprintf(
 							/* translators: %s: human-readable time difference. */
-							__( 'Last scan finished %s ago.', 'broken-image-cleaner' ),
+							__( 'Last scan finished %s ago.', 'ghostpix-broken-image-cleaner' ),
 							human_time_diff( (int) $state['finished_at'] )
 						)
 					)
@@ -493,20 +493,20 @@ class Admin {
 			} else {
 				printf(
 					'<p>%s</p>',
-					esc_html__( 'No scan has run yet. Scanning only reads your content — nothing is changed until you choose to remove something.', 'broken-image-cleaner' )
+					esc_html__( 'No scan has run yet. Scanning only reads your content — nothing is changed until you choose to remove something.', 'ghostpix-broken-image-cleaner' )
 				);
 			}
 
 			printf(
 				'<a href="%s" class="button button-primary">%s</a> ',
 				esc_url( self::action_url( 'scan_start' ) ),
-				esc_html__( 'Start scan', 'broken-image-cleaner' )
+				esc_html__( 'Start scan', 'ghostpix-broken-image-cleaner' )
 			);
 
 			printf(
 				'<a href="%s" class="button">%s</a>',
 				esc_url( self::action_url( 'clear' ) ),
-				esc_html__( 'Clear results', 'broken-image-cleaner' )
+				esc_html__( 'Clear results', 'ghostpix-broken-image-cleaner' )
 			);
 		}
 
@@ -522,14 +522,14 @@ class Admin {
 		$selected  = Scanner::post_types();
 		$retention = Backup::retention_days();
 
-		echo '<h2>' . esc_html__( 'Settings', 'broken-image-cleaner' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Settings', 'ghostpix-broken-image-cleaner' ) . '</h2>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php?page=' . self::SLUG ) ) . '">';
 		wp_nonce_field( self::NONCE, self::NONCE_FIELD );
 		echo '<input type="hidden" name="broken_image_cleaner_action" value="save_settings" />';
 
 		echo '<table class="form-table" role="presentation"><tbody>';
 
-		echo '<tr><th scope="row">' . esc_html__( 'Post types to scan', 'broken-image-cleaner' ) . '</th><td>';
+		echo '<tr><th scope="row">' . esc_html__( 'Post types to scan', 'ghostpix-broken-image-cleaner' ) . '</th><td>';
 
 		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) {
 			printf(
@@ -542,26 +542,26 @@ class Admin {
 
 		echo '</td></tr>';
 
-		echo '<tr><th scope="row"><label for="broken-image-cleaner-retention">' . esc_html__( 'Keep undo data for', 'broken-image-cleaner' ) . '</label></th><td>';
+		echo '<tr><th scope="row"><label for="ghostpix-broken-image-cleaner-retention">' . esc_html__( 'Keep undo data for', 'ghostpix-broken-image-cleaner' ) . '</label></th><td>';
 		printf(
-			'<input type="number" min="1" max="365" id="broken-image-cleaner-retention" name="retention_days" value="%s" class="small-text" /> %s',
+			'<input type="number" min="1" max="365" id="ghostpix-broken-image-cleaner-retention" name="retention_days" value="%s" class="small-text" /> %s',
 			esc_attr( $retention ),
-			esc_html__( 'days', 'broken-image-cleaner' )
+			esc_html__( 'days', 'ghostpix-broken-image-cleaner' )
 		);
-		echo '<p class="description">' . esc_html__( 'After this, saved copies of cleaned posts are deleted and those removals can no longer be undone.', 'broken-image-cleaner' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'After this, saved copies of cleaned posts are deleted and those removals can no longer be undone.', 'ghostpix-broken-image-cleaner' ) . '</p>';
 		echo '</td></tr>';
 
-		echo '<tr><th scope="row">' . esc_html__( 'On uninstall', 'broken-image-cleaner' ) . '</th><td>';
+		echo '<tr><th scope="row">' . esc_html__( 'On uninstall', 'ghostpix-broken-image-cleaner' ) . '</th><td>';
 		printf(
 			'<label><input type="checkbox" name="delete_data" value="1"%s /> %s</label>',
 			get_option( Plugin::DELETE_DATA_OPTION ) ? ' checked="checked"' : '',
-			esc_html__( 'Delete this plugin\'s data, including saved copies used for undo, when the plugin is deleted.', 'broken-image-cleaner' )
+			esc_html__( 'Delete this plugin\'s data, including saved copies used for undo, when the plugin is deleted.', 'ghostpix-broken-image-cleaner' )
 		);
 		echo '</td></tr>';
 
 		echo '</tbody></table>';
 
-		submit_button( __( 'Save settings', 'broken-image-cleaner' ) );
+		submit_button( __( 'Save settings', 'ghostpix-broken-image-cleaner' ) );
 
 		echo '</form>';
 	}

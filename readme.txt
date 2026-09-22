@@ -1,4 +1,4 @@
-=== Broken Image Cleaner ===
+=== Ghostpix Broken Image Cleaner ===
 Contributors: haritpanchal
 Tags: broken images, missing images, media cleanup, classic editor, content cleanup
 Requires at least: 5.6
@@ -18,7 +18,7 @@ post content, pointing at files that are no longer there. Visitors see a broken-
 icon, your server answers a 404, and the damage is spread across thousands of old
 posts that nobody is going to open by hand.
 
-Broken Image Cleaner finds those references and removes them from the content itself.
+Ghostpix Broken Image Cleaner finds those references and removes them from the content itself.
 
 **It edits your content, so it is built to be careful about it:**
 
@@ -52,7 +52,7 @@ on your own server.
 
 == Installation ==
 
-1. Upload the plugin to `/wp-content/plugins/broken-image-cleaner`, or install it
+1. Upload the plugin to `/wp-content/plugins/ghostpix-broken-image-cleaner`, or install it
    through the Plugins screen.
 2. Activate the plugin.
 3. Go to **Tools → Broken Images** and start a scan.

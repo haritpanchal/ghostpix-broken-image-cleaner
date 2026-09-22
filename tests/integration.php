@@ -9,7 +9,7 @@
  *
  * Run it inside the local environment:
  *
- *     npx wp-env run cli wp eval-file wp-content/plugins/broken-image-cleaner/tests/integration.php
+ *     npx wp-env run cli wp eval-file wp-content/plugins/ghostpix-broken-image-cleaner/tests/integration.php
  *
  * It creates one post and a couple of files in the uploads folder, and deletes
  * both again at the end.
@@ -92,7 +92,7 @@ HTML;
 
 $post_id = wp_insert_post(
 	array(
-		'post_title'   => 'Broken Image Cleaner integration fixture',
+		'post_title'   => 'Ghostpix Broken Image Cleaner integration fixture',
 		'post_content' => $content,
 		'post_status'  => 'publish',
 		'post_type'    => 'post',

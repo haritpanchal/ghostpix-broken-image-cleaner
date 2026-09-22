@@ -10,11 +10,11 @@
  * Nothing here runs a scan. Start that yourself from Tools → Broken Images, so
  * you see the plugin find these rather than being handed the answers.
  *
- *     npx wp-env run cli wp eval-file wp-content/plugins/broken-image-cleaner/tests/seed-demo.php
+ *     npx wp-env run cli wp eval-file wp-content/plugins/ghostpix-broken-image-cleaner/tests/seed-demo.php
  *
  * Re-running replaces the demo content. To remove it and the files it created:
  *
- *     npx wp-env run cli wp eval-file wp-content/plugins/broken-image-cleaner/tests/seed-demo.php cleanup
+ *     npx wp-env run cli wp eval-file wp-content/plugins/ghostpix-broken-image-cleaner/tests/seed-demo.php cleanup
  *
  * @package BrokenImageCleaner
  */

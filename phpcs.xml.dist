@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Broken Image Cleaner">
-	<description>Coding standards for the Broken Image Cleaner plugin.</description>
+<ruleset name="Ghostpix Broken Image Cleaner">
+	<description>Coding standards for the Ghostpix Broken Image Cleaner plugin.</description>
 
 	<file>.</file>
 
@@ -44,7 +44,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="broken-image-cleaner"/>
+				<element value="ghostpix-broken-image-cleaner"/>
 			</property>
 		</properties>
 	</rule>

@@ -99,14 +99,14 @@ class Backup {
 		if ( null === $backup ) {
 			return new \WP_Error(
 				'broken_image_cleaner_no_backup',
-				__( 'There is no saved copy of this post to restore.', 'broken-image-cleaner' )
+				__( 'There is no saved copy of this post to restore.', 'ghostpix-broken-image-cleaner' )
 			);
 		}
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return new \WP_Error(
 				'broken_image_cleaner_cannot_edit',
-				__( 'You are not allowed to edit this post.', 'broken-image-cleaner' )
+				__( 'You are not allowed to edit this post.', 'ghostpix-broken-image-cleaner' )
 			);
 		}
 

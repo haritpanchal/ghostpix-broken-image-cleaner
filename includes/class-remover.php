@@ -56,7 +56,7 @@ class Remover {
 		// unfiltered HTML. Without it wp_update_post would run the whole post
 		// through kses and strip markup that has nothing to do with the image.
 		if ( ! current_user_can( 'unfiltered_html' ) ) {
-			$report['errors'][] = __( 'Your account is not allowed to save unfiltered HTML, so post content cannot be edited safely. Ask an administrator to run the clean-up.', 'broken-image-cleaner' );
+			$report['errors'][] = __( 'Your account is not allowed to save unfiltered HTML, so post content cannot be edited safely. Ask an administrator to run the clean-up.', 'ghostpix-broken-image-cleaner' );
 			$report['skipped']  = count( $finding_ids );
 
 			return $report;
@@ -142,7 +142,7 @@ class Remover {
 		if ( ! $post ) {
 			return sprintf(
 				/* translators: %d: post ID. */
-				__( 'Post %d no longer exists.', 'broken-image-cleaner' ),
+				__( 'Post %d no longer exists.', 'ghostpix-broken-image-cleaner' ),
 				$post_id
 			);
 		}
@@ -150,7 +150,7 @@ class Remover {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return sprintf(
 				/* translators: %s: post title. */
-				__( 'You are not allowed to edit "%s".', 'broken-image-cleaner' ),
+				__( 'You are not allowed to edit "%s".', 'ghostpix-broken-image-cleaner' ),
 				get_the_title( $post_id )
 			);
 		}

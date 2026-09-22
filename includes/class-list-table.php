@@ -52,22 +52,22 @@ class List_Table extends \WP_List_Table {
 	public static function view_definitions() {
 		return array(
 			'broken'       => array(
-				'label'   => __( 'Broken', 'broken-image-cleaner' ),
+				'label'   => __( 'Broken', 'ghostpix-broken-image-cleaner' ),
 				'status'  => Store::STATUS_BROKEN,
 				'reasons' => array( Store::REASON_FILE_MISSING, Store::REASON_ZERO_BYTE, Store::REASON_SRCSET_MISSING ),
 			),
 			'size_missing' => array(
-				'label'   => __( 'Missing sizes', 'broken-image-cleaner' ),
+				'label'   => __( 'Missing sizes', 'ghostpix-broken-image-cleaner' ),
 				'status'  => Store::STATUS_BROKEN,
 				'reasons' => array( Store::REASON_SIZE_MISSING ),
 			),
 			'ignored'      => array(
-				'label'   => __( 'Ignored', 'broken-image-cleaner' ),
+				'label'   => __( 'Ignored', 'ghostpix-broken-image-cleaner' ),
 				'status'  => Store::STATUS_IGNORED,
 				'reasons' => array(),
 			),
 			'removed'      => array(
-				'label'   => __( 'Removed', 'broken-image-cleaner' ),
+				'label'   => __( 'Removed', 'ghostpix-broken-image-cleaner' ),
 				'status'  => Store::STATUS_REMOVED,
 				'reasons' => array(),
 			),
@@ -94,11 +94,11 @@ class List_Table extends \WP_List_Table {
 	public function get_columns() {
 		return array(
 			'cb'           => '<input type="checkbox" />',
-			'post'         => __( 'Post', 'broken-image-cleaner' ),
-			'image_url'    => __( 'Image', 'broken-image-cleaner' ),
-			'reason'       => __( 'Problem', 'broken-image-cleaner' ),
-			'context'      => __( 'Context', 'broken-image-cleaner' ),
-			'last_checked' => __( 'Last checked', 'broken-image-cleaner' ),
+			'post'         => __( 'Post', 'ghostpix-broken-image-cleaner' ),
+			'image_url'    => __( 'Image', 'ghostpix-broken-image-cleaner' ),
+			'reason'       => __( 'Problem', 'ghostpix-broken-image-cleaner' ),
+			'context'      => __( 'Context', 'ghostpix-broken-image-cleaner' ),
+			'last_checked' => __( 'Last checked', 'ghostpix-broken-image-cleaner' ),
 		);
 	}
 
@@ -140,18 +140,18 @@ class List_Table extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		if ( 'removed' === self::current_view() ) {
-			return array( 'restore' => __( 'Undo removal', 'broken-image-cleaner' ) );
+			return array( 'restore' => __( 'Undo removal', 'ghostpix-broken-image-cleaner' ) );
 		}
 
 		$actions = array(
-			'remove'  => __( 'Remove from content', 'broken-image-cleaner' ),
-			'recheck' => __( 'Re-check', 'broken-image-cleaner' ),
+			'remove'  => __( 'Remove from content', 'ghostpix-broken-image-cleaner' ),
+			'recheck' => __( 'Re-check', 'ghostpix-broken-image-cleaner' ),
 		);
 
 		if ( 'ignored' === self::current_view() ) {
-			$actions['unignore'] = __( 'Move back to Broken', 'broken-image-cleaner' );
+			$actions['unignore'] = __( 'Move back to Broken', 'ghostpix-broken-image-cleaner' );
 		} else {
-			$actions['ignore'] = __( 'Ignore', 'broken-image-cleaner' );
+			$actions['ignore'] = __( 'Ignore', 'ghostpix-broken-image-cleaner' );
 		}
 
 		return $actions;
@@ -197,7 +197,7 @@ class List_Table extends \WP_List_Table {
 	 * @return void
 	 */
 	public function no_items() {
-		esc_html_e( 'Nothing to show here.', 'broken-image-cleaner' );
+		esc_html_e( 'Nothing to show here.', 'ghostpix-broken-image-cleaner' );
 	}
 
 	/**
@@ -222,7 +222,7 @@ class List_Table extends \WP_List_Table {
 
 		if ( '' === trim( $title ) ) {
 			/* translators: %d: post ID. */
-			$title = sprintf( __( '(no title) #%d', 'broken-image-cleaner' ), $post_id );
+			$title = sprintf( __( '(no title) #%d', 'ghostpix-broken-image-cleaner' ), $post_id );
 		}
 
 		$edit_link = get_edit_post_link( $post_id );
@@ -236,7 +236,7 @@ class List_Table extends \WP_List_Table {
 			$actions['undo'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( Admin::action_url( 'undo', array( 'post' => $post_id ) ) ),
-				esc_html__( 'Undo changes to this post', 'broken-image-cleaner' )
+				esc_html__( 'Undo changes to this post', 'ghostpix-broken-image-cleaner' )
 			);
 		}
 
@@ -261,10 +261,10 @@ class List_Table extends \WP_List_Table {
 	 */
 	protected function column_reason( $item ) {
 		$labels = array(
-			Store::REASON_FILE_MISSING   => __( 'File not found', 'broken-image-cleaner' ),
-			Store::REASON_ZERO_BYTE      => __( 'File is empty', 'broken-image-cleaner' ),
-			Store::REASON_SIZE_MISSING   => __( 'Generated size missing (original is present)', 'broken-image-cleaner' ),
-			Store::REASON_SRCSET_MISSING => __( 'Responsive size missing — only the srcset entry is removed, the image stays', 'broken-image-cleaner' ),
+			Store::REASON_FILE_MISSING   => __( 'File not found', 'ghostpix-broken-image-cleaner' ),
+			Store::REASON_ZERO_BYTE      => __( 'File is empty', 'ghostpix-broken-image-cleaner' ),
+			Store::REASON_SIZE_MISSING   => __( 'Generated size missing (original is present)', 'ghostpix-broken-image-cleaner' ),
+			Store::REASON_SRCSET_MISSING => __( 'Responsive size missing — only the srcset entry is removed, the image stays', 'ghostpix-broken-image-cleaner' ),
 		);
 
 		return isset( $labels[ $item->reason ] ) ? esc_html( $labels[ $item->reason ] ) : esc_html( $item->reason );
@@ -277,7 +277,7 @@ class List_Table extends \WP_List_Table {
 	 * @return string
 	 */
 	protected function column_context( $item ) {
-		return '<span class="broken-image-cleaner-context">' . esc_html( $item->context_snippet ) . '</span>';
+		return '<span class="ghostpix-broken-image-cleaner-context">' . esc_html( $item->context_snippet ) . '</span>';
 	}
 
 	/**
@@ -296,7 +296,7 @@ class List_Table extends \WP_List_Table {
 		return esc_html(
 			sprintf(
 				/* translators: %s: human-readable time difference, e.g. "2 hours". */
-				__( '%s ago', 'broken-image-cleaner' ),
+				__( '%s ago', 'ghostpix-broken-image-cleaner' ),
 				human_time_diff( $timestamp )
 			)
 		);
