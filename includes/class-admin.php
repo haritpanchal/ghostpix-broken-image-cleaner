@@ -41,12 +41,18 @@ class Admin {
 	const NONCE_FIELD = 'broken_image_cleaner_nonce';
 
 	/**
+	 * Admin-ajax action that runs one scan batch and reports progress.
+	 */
+	const AJAX_ACTION = 'broken_image_cleaner_scan_progress';
+
+	/**
 	 * Register admin hooks.
 	 *
 	 * @return void
 	 */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+		add_action( 'wp_ajax_' . self::AJAX_ACTION, array( __CLASS__, 'ajax_scan_progress' ) );
 	}
 
 	/**
@@ -65,7 +71,7 @@ class Admin {
 
 		if ( $hook ) {
 			add_action( 'load-' . $hook, array( __CLASS__, 'handle_actions' ) );
-			add_action( 'admin_print_styles-' . $hook, array( __CLASS__, 'print_styles' ) );
+			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		}
 	}
 
@@ -114,8 +120,10 @@ class Admin {
 
 		switch ( $action ) {
 			case 'scan_start':
+				// The status panel is the progress UI. A flash notice here would
+				// stay in the URL across the reloads that used to be how you
+				// checked on a scan, so the screen showed two "in progress" blocks.
 				Scanner::start();
-				$notice = 'scan_started';
 				break;
 
 			case 'scan_stop':
@@ -146,16 +154,16 @@ class Admin {
 				break;
 		}
 
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'                        => self::SLUG,
-					'view'                        => List_Table::current_view(),
-					'broken_image_cleaner_notice' => $notice,
-				),
-				admin_url( 'tools.php' )
-			)
+		$args = array(
+			'page' => self::SLUG,
+			'view' => List_Table::current_view(),
 		);
+
+		if ( '' !== $notice ) {
+			$args['broken_image_cleaner_notice'] = $notice;
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'tools.php' ) ) );
 		exit;
 	}
 
@@ -311,16 +319,95 @@ class Admin {
 	}
 
 	/**
-	 * Minimal styles for the review table.
+	 * Styles for the review table, and the progress script while a scan is running.
 	 *
+	 * @param string $hook_suffix Current admin page hook.
 	 * @return void
 	 */
-	public static function print_styles() {
+	public static function enqueue_assets( $hook_suffix ) {
+		if ( 'tools_page_' . self::SLUG !== $hook_suffix ) {
+			return;
+		}
+
 		wp_enqueue_style(
 			'ghostpix-broken-image-cleaner-admin',
 			BROKEN_IMAGE_CLEANER_URL . 'assets/admin.css',
 			array(),
 			BROKEN_IMAGE_CLEANER_VERSION
+		);
+
+		if ( ! Scanner::is_running() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'ghostpix-broken-image-cleaner-admin',
+			BROKEN_IMAGE_CLEANER_URL . 'assets/admin.js',
+			array( 'jquery' ),
+			BROKEN_IMAGE_CLEANER_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'ghostpix-broken-image-cleaner-admin',
+			'ghostpixBrokenImageCleaner',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( self::NONCE ),
+				'action'  => self::AJAX_ACTION,
+			)
+		);
+	}
+
+	/**
+	 * Run one batch and report where the scan stands.
+	 *
+	 * The tools screen calls this while it is open. WP-Cron remains the driver
+	 * when nobody is watching, but a loopback to wp-cron.php is what used to
+	 * leave the count frozen on this page.
+	 *
+	 * @return void
+	 */
+	public static function ajax_scan_progress() {
+		if ( ! current_user_can( Plugin::CAPABILITY ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'You do not have permission to scan.', 'ghostpix-broken-image-cleaner' ),
+				),
+				403
+			);
+		}
+
+		check_ajax_referer( self::NONCE, 'nonce' );
+
+		if ( Scanner::is_running() ) {
+			Scanner::run_batch();
+		}
+
+		$state = Scanner::state();
+
+		wp_send_json_success(
+			array(
+				'running' => Scanner::is_running(),
+				'scanned' => (int) $state['scanned'],
+				'total'   => (int) $state['total'],
+				'message' => self::progress_message( $state ),
+			)
+		);
+	}
+
+	/**
+	 * The "Checked X of Y" sentence, shared by the panel and the progress request.
+	 *
+	 * @param array $state Scan state.
+	 * @return string
+	 */
+	private static function progress_message( array $state ) {
+		return sprintf(
+			/* translators: 1: posts scanned, 2: total posts. */
+			__( 'Checked %1$s of %2$s posts so far.', 'ghostpix-broken-image-cleaner' ),
+			number_format_i18n( (int) $state['scanned'] ),
+			number_format_i18n( (int) $state['total'] )
 		);
 	}
 
@@ -374,7 +461,6 @@ class Admin {
 		}
 
 		$messages = array(
-			'scan_started'     => __( 'Scan started. Results will appear here as it works through your content.', 'ghostpix-broken-image-cleaner' ),
 			'scan_stopped'     => __( 'Scan stopped. Anything found so far has been kept.', 'ghostpix-broken-image-cleaner' ),
 			'cleared'          => __( 'All results cleared.', 'ghostpix-broken-image-cleaner' ),
 			'ignored'          => __( 'The selected images will be left alone.', 'ghostpix-broken-image-cleaner' ),
@@ -461,16 +547,9 @@ class Admin {
 
 		if ( Scanner::is_running() ) {
 			printf(
-				'<p><strong>%s</strong> %s</p>',
+				'<p><strong>%s</strong> <span id="ghostpix-broken-image-cleaner-progress">%s</span></p>',
 				esc_html__( 'Scan in progress.', 'ghostpix-broken-image-cleaner' ),
-				esc_html(
-					sprintf(
-						/* translators: 1: posts scanned, 2: total posts. */
-						__( 'Checked %1$s of %2$s posts so far. Reload this page for an update.', 'ghostpix-broken-image-cleaner' ),
-						number_format_i18n( (int) $state['scanned'] ),
-						number_format_i18n( (int) $state['total'] )
-					)
-				)
+				esc_html( self::progress_message( $state ) )
 			);
 
 			printf(
