@@ -37,6 +37,15 @@ class Scanner {
 	const BATCH_SIZE = 50;
 
 	/**
+	 * Option used as a lock so cron and the tools screen cannot scan at once.
+	 *
+	 * add_option() fails when the row already exists, which is the atomic part.
+	 * A crashed batch leaves the row behind, so a lock older than a minute is
+	 * taken over rather than respected.
+	 */
+	const LOCK_OPTION = 'broken_image_cleaner_scan_lock';
+
+	/**
 	 * Post statuses worth scanning.
 	 *
 	 * @return array
@@ -127,6 +136,13 @@ class Scanner {
 	/**
 	 * Examine the next batch of posts.
 	 *
+	 * A batch shorter than BATCH_SIZE is the last one: the query is ordered by
+	 * ID and limited, so a short page means nothing remains. Finishing here
+	 * matters because the follow-up cron tick that used to notice the empty
+	 * queue is not spawned from inside wp-cron.php, and the cron lock then
+	 * blocks another spawn for a minute. A scan of a small site would otherwise
+	 * sit on "in progress" after every post had already been checked.
+	 *
 	 * @return void
 	 */
 	public static function run_batch() {
@@ -134,6 +150,25 @@ class Scanner {
 			return;
 		}
 
+		if ( ! self::acquire_lock() ) {
+			// The other runner owns this batch. Make sure a tick stays queued
+			// for after it lets go, in case the event that called us was just
+			// unscheduled by wp-cron and will not be put back.
+			Cron::schedule_batch();
+
+			return;
+		}
+
+		self::process_batch();
+		self::release_lock();
+	}
+
+	/**
+	 * Scan one batch. Caller holds the lock.
+	 *
+	 * @return void
+	 */
+	private static function process_batch() {
 		$state = self::state();
 		$posts = self::next_posts( $state['last_post_id'] );
 
@@ -154,7 +189,43 @@ class Scanner {
 
 		update_option( self::STATE_OPTION, $state, false );
 
+		if ( count( $posts ) < self::BATCH_SIZE ) {
+			self::stop();
+
+			return;
+		}
+
 		Cron::schedule_batch();
+	}
+
+	/**
+	 * Claim the scan lock.
+	 *
+	 * @return bool Whether this call owns the lock.
+	 */
+	private static function acquire_lock() {
+		if ( add_option( self::LOCK_OPTION, time(), '', false ) ) {
+			return true;
+		}
+
+		$locked_at = (int) get_option( self::LOCK_OPTION, 0 );
+
+		if ( ( time() - $locked_at ) < MINUTE_IN_SECONDS ) {
+			return false;
+		}
+
+		update_option( self::LOCK_OPTION, time(), false );
+
+		return true;
+	}
+
+	/**
+	 * Release the scan lock.
+	 *
+	 * @return void
+	 */
+	private static function release_lock() {
+		delete_option( self::LOCK_OPTION );
 	}
 
 	/**

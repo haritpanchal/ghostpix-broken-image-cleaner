@@ -21,6 +21,7 @@ $broken_image_cleaner_delete_data = (bool) get_option( 'broken_image_cleaner_del
 BrokenImageCleaner\Store::drop_table();
 
 delete_option( 'broken_image_cleaner_scan_state' );
+delete_option( 'broken_image_cleaner_scan_lock' );
 delete_option( 'broken_image_cleaner_post_types' );
 delete_option( 'broken_image_cleaner_retention_days' );
 delete_option( 'broken_image_cleaner_delete_data' );
