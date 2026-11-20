@@ -127,6 +127,11 @@ that can edit posts.
 
 == Changelog ==
 
+= 1.1.0 =
+* Add WP-CLI commands: `scan`, `list`, and `remove` with dry-run support.
+* Trim context snippets to word boundaries so they read as excerpts rather than damaged text.
+* Clarify that all resolver status constants are part of the return contract.
+
 = 1.0.0 =
 * Initial release.
 * Background scanning of post content for images missing from the uploads folder.
