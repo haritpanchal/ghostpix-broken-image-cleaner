@@ -39,11 +39,48 @@ class Remover {
 	 * }
 	 */
 	public static function remove( array $finding_ids ) {
+		$report = self::apply( $finding_ids, true );
+
+		unset( $report['items'] );
+
+		return $report;
+	}
+
+	/**
+	 * Report what remove() would do, without writing.
+	 *
+	 * The same checks run: permission, the file still being missing, and the
+	 * rewriter actually having something to cut out. Nothing is saved, and no
+	 * finding changes status. Callers that only want to show the plan — the
+	 * WP-CLI dry run — must use this and not remove().
+	 *
+	 * @param array $finding_ids Finding IDs to assess.
+	 * @return array {
+	 *     @type int   $posts_changed  Posts that would be edited.
+	 *     @type int   $images_removed Image references that would be removed.
+	 *     @type int   $skipped        Findings that would be left alone.
+	 *     @type array $errors         Human-readable messages.
+	 *     @type array $items          One row per finding: id, post_id, image_url, reason, action, detail.
+	 * }
+	 */
+	public static function preview( array $finding_ids ) {
+		return self::apply( $finding_ids, false );
+	}
+
+	/**
+	 * Assess a set of findings, and write the result only when asked.
+	 *
+	 * @param array $finding_ids Finding IDs to act on.
+	 * @param bool  $write       Whether to save posts and update finding status.
+	 * @return array
+	 */
+	private static function apply( array $finding_ids, $write ) {
 		$report = array(
 			'posts_changed'  => 0,
 			'images_removed' => 0,
 			'skipped'        => 0,
 			'errors'         => array(),
+			'items'          => array(),
 		);
 
 		$finding_ids = array_slice( array_filter( array_map( 'absint', $finding_ids ) ), 0, self::MAX_PER_REQUEST );
@@ -71,11 +108,12 @@ class Remover {
 		$resolver = new Resolver();
 
 		foreach ( $by_post as $post_id => $findings ) {
-			$result = self::process_post( $post_id, $findings, $resolver );
+			$result = self::process_post( $post_id, $findings, $resolver, $write );
 
 			$report['images_removed'] += $result['images_removed'];
 			$report['skipped']        += $result['skipped'];
 			$report['errors']          = array_merge( $report['errors'], $result['errors'] );
+			$report['items']           = array_merge( $report['items'], $result['items'] );
 
 			if ( $result['images_removed'] > 0 ) {
 				++$report['posts_changed'];
@@ -91,13 +129,15 @@ class Remover {
 	 * @param int      $post_id  Post ID.
 	 * @param array    $findings Findings belonging to this post.
 	 * @param Resolver $resolver Shared resolver.
+	 * @param bool     $write    Whether to save the post and update finding status.
 	 * @return array
 	 */
-	private static function process_post( $post_id, array $findings, Resolver $resolver ) {
+	private static function process_post( $post_id, array $findings, Resolver $resolver, $write = true ) {
 		$result = array(
 			'images_removed' => 0,
 			'skipped'        => 0,
 			'errors'         => array(),
+			'items'          => array(),
 		);
 
 		$post    = get_post( $post_id );
@@ -107,16 +147,21 @@ class Remover {
 			$result['skipped'] += count( $findings );
 			$result['errors'][] = $refusal;
 
+			foreach ( $findings as $finding ) {
+				$result['items'][] = self::finding_item( $finding, 'skip', $refusal );
+			}
+
 			return $result;
 		}
 
 		$original = $post->post_content;
-		$outcome  = self::rewrite( $original, $findings, $resolver );
+		$outcome  = self::rewrite( $original, $findings, $resolver, $write );
 
 		$result['images_removed'] = $outcome['removed'];
 		$result['skipped']        = $outcome['skipped'];
+		$result['items']          = $outcome['items'];
 
-		if ( $outcome['content'] === $original ) {
+		if ( ! $write || $outcome['content'] === $original ) {
 			return $result;
 		}
 
@@ -164,17 +209,20 @@ class Remover {
 	 * @param string   $content  Current post content.
 	 * @param array    $findings Findings belonging to this post.
 	 * @param Resolver $resolver Shared resolver.
+	 * @param bool     $write    Whether a finding whose file is back may be marked restored.
 	 * @return array {
 	 *     @type string $content Content after the removals.
 	 *     @type int    $removed References removed.
 	 *     @type int    $skipped Findings left alone.
 	 *     @type array  $applied IDs of the findings that were acted on.
+	 *     @type array  $items   One row per finding, for a dry run.
 	 * }
 	 */
-	private static function rewrite( $content, array $findings, Resolver $resolver ) {
+	private static function rewrite( $content, array $findings, Resolver $resolver, $write = true ) {
 		$removed = 0;
 		$skipped = 0;
 		$applied = array();
+		$items   = array();
 
 		foreach ( $findings as $finding ) {
 			// The queue may be minutes or weeks old. Confirm the file is still
@@ -184,7 +232,11 @@ class Remover {
 			if ( Resolver::STATUS_BROKEN !== $check['status'] ) {
 				++$skipped;
 
-				Store::set_status( $finding->id, Store::STATUS_RESTORED );
+				if ( $write ) {
+					Store::set_status( $finding->id, Store::STATUS_RESTORED );
+				}
+
+				$items[] = self::finding_item( $finding, 'skip', __( 'The file is there now.', 'ghostpix-broken-image-cleaner' ) );
 
 				continue;
 			}
@@ -194,12 +246,15 @@ class Remover {
 			if ( 0 === $outcome['removed'] ) {
 				++$skipped;
 
+				$items[] = self::finding_item( $finding, 'skip', __( 'The image is no longer in the post.', 'ghostpix-broken-image-cleaner' ) );
+
 				continue;
 			}
 
 			$content   = $outcome['content'];
 			$removed  += $outcome['removed'];
 			$applied[] = (int) $finding->id;
+			$items[]   = self::finding_item( $finding, 'remove', '' );
 		}
 
 		return array(
@@ -207,6 +262,26 @@ class Remover {
 			'removed' => $removed,
 			'skipped' => $skipped,
 			'applied' => $applied,
+			'items'   => $items,
+		);
+	}
+
+	/**
+	 * One finding, as a dry run will print it.
+	 *
+	 * @param object $finding Finding row.
+	 * @param string $action  Either "remove" or "skip".
+	 * @param string $detail  Why a finding was skipped, when it was.
+	 * @return array
+	 */
+	private static function finding_item( $finding, $action, $detail ) {
+		return array(
+			'id'        => (int) $finding->id,
+			'post_id'   => (int) $finding->post_id,
+			'image_url' => (string) $finding->image_url,
+			'reason'    => (string) $finding->reason,
+			'action'    => $action,
+			'detail'    => $detail,
 		);
 	}
 
