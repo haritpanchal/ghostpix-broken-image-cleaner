@@ -38,6 +38,12 @@ class Plugin {
 	public static function boot() {
 		Cron::init();
 
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			require_once BROKEN_IMAGE_CLEANER_DIR . 'includes/class-cli.php';
+
+			CLI::register();
+		}
+
 		if ( is_admin() ) {
 			require_once BROKEN_IMAGE_CLEANER_DIR . 'includes/class-list-table.php';
 			require_once BROKEN_IMAGE_CLEANER_DIR . 'includes/class-admin.php';

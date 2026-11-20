@@ -105,6 +105,20 @@ tested for Classic Editor content. Block editor support is planned.
 No. Scanning runs in the background in small batches and only in the admin. Nothing
 runs on the front end at all.
 
+= Can I run this from the command line? =
+
+Yes, with WP-CLI. `scan` checks your content, `list` prints what was found, and
+`remove` edits posts. `remove` acts on the same findings as the Broken view.
+Missing generated sizes are left out unless you pass `--include-missing-sizes`.
+
+`wp ghostpix-broken-image-cleaner remove --dry-run` prints what would change and
+writes nothing. Add `--yes` to skip the confirmation, and `--user` for an account
+that can edit posts.
+
+    wp ghostpix-broken-image-cleaner scan
+    wp ghostpix-broken-image-cleaner list
+    wp ghostpix-broken-image-cleaner remove --dry-run
+
 == Screenshots ==
 
 1. The results table, showing each broken image with the post it appears in.
