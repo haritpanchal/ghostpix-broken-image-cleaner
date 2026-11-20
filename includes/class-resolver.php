@@ -23,6 +23,10 @@ class Resolver {
 
 	/**
 	 * The file exists and is usable.
+	 *
+	 * Returned by check() as part of its contract. Current callers only test
+	 * whether the status is broken, but all three statuses are legitimate
+	 * return values and future callers may distinguish between them.
 	 */
 	const STATUS_OK = 'ok';
 
@@ -33,6 +37,10 @@ class Resolver {
 
 	/**
 	 * Out of scope for this version, so no opinion is offered.
+	 *
+	 * Returned by check() as part of its contract. Current callers only test
+	 * whether the status is broken, but all three statuses are legitimate
+	 * return values and future callers may distinguish between them.
 	 */
 	const STATUS_SKIPPED = 'skipped';
 
