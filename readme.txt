@@ -4,7 +4,7 @@ Tags: broken images, missing images, media cleanup, classic editor, content clea
 Requires at least: 5.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -128,9 +128,9 @@ that can edit posts.
 == Changelog ==
 
 = 1.1.0 =
-* Add WP-CLI commands: `scan`, `list`, and `remove` with dry-run support.
-* Trim context snippets to word boundaries so they read as excerpts rather than damaged text.
-* Clarify that all resolver status constants are part of the return contract.
+* Add WP-CLI commands: `scan`, `list`, and `remove`, with `--dry-run` to preview a removal without changing anything.
+* Trim context snippets to whole words, with an ellipsis where the text is cut, so they read as excerpts rather than damaged text.
+* Document that all resolver status constants are part of the return contract.
 
 = 1.0.0 =
 * Initial release.
@@ -141,6 +141,9 @@ that can edit posts.
 * Per-post undo with configurable retention.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds WP-CLI commands (scan, list, remove) and cleaner context snippets in the results table.
 
 = 1.0.0 =
 Initial release.
