@@ -39,9 +39,9 @@ class Scanner {
 	/**
 	 * Option used as a lock so cron and the tools screen cannot scan at once.
 	 *
-	 * add_option() fails when the row already exists, which is the atomic part.
-	 * A crashed batch leaves the row behind, so a lock older than a minute is
-	 * taken over rather than respected.
+	 * The add_option() call fails when the row already exists, which is the
+	 * atomic part. A crashed batch leaves the row behind, so a lock older than
+	 * a minute is taken over rather than respected.
 	 */
 	const LOCK_OPTION = 'broken_image_cleaner_scan_lock';
 
@@ -313,15 +313,18 @@ class Scanner {
 	 * @return string
 	 */
 	private static function snippet( $content, $offset, $length ) {
-		$start = max( 0, $offset - 80 );
-		$slice = substr( $content, $start, $length + 160 );
+		$start             = max( 0, $offset - 80 );
+		$requested_length  = $length + 160;
+		$slice             = substr( $content, $start, $requested_length );
+		$was_clipped_start = ( $start > 0 );
+		$was_clipped_end   = ( $start + strlen( $slice ) < strlen( $content ) );
 
 		// The slice is cut at a byte count, so it usually begins and ends in the
 		// middle of a tag. Those half-tags have to go before the markup is
 		// stripped: with its opening bracket already lost, a slice starting
 		// inside a paragraph is not recognised as a tag at all and survives
 		// stripping as the literal text "p>".
-		if ( $start > 0 ) {
+		if ( $was_clipped_start ) {
 			$first_open  = strpos( $slice, '<' );
 			$first_close = strpos( $slice, '>' );
 
@@ -337,7 +340,115 @@ class Scanner {
 			$slice = substr( $slice, 0, $last_open );
 		}
 
-		return wp_html_excerpt( trim( $slice ), 200, '…' );
+		// Strip HTML and collapse whitespace to get the visible text. This must
+		// happen before word boundary trimming so whitespace inside markup does
+		// not count as a boundary.
+		$slice = wp_strip_all_tags( $slice );
+		$slice = trim( preg_replace( '/\s+/', ' ', $slice ) );
+
+		if ( '' === $slice ) {
+			return '';
+		}
+
+		// If the visible text exceeds 200 characters, truncate it. Keep the first
+		// 200 characters to maintain the image's position (roughly 80 characters
+		// before it, as intended by the initial slice). The end is now clipped.
+		$max_length = 200;
+		$mb_length  = mb_strlen( $slice, 'UTF-8' );
+
+		if ( $mb_length > $max_length ) {
+			$slice           = mb_substr( $slice, 0, $max_length, 'UTF-8' );
+			$was_clipped_end = true;
+		}
+
+		// Trim clipped edges to word boundaries so the snippet reads as an
+		// excerpt. Only edges that were actually cut (by the original slice or
+		// by the 200-character limit) are trimmed and marked with an ellipsis.
+		if ( $was_clipped_start ) {
+			$slice = self::trim_start_to_word_boundary( $slice );
+		}
+
+		if ( $was_clipped_end ) {
+			$slice = self::trim_end_to_word_boundary( $slice );
+		}
+
+		// Mark truncated edges with an ellipsis.
+		$prefix = $was_clipped_start ? '…' : '';
+		$suffix = $was_clipped_end ? '…' : '';
+
+		return $prefix . $slice . $suffix;
+	}
+
+	/**
+	 * Trim the start of text to the first word boundary.
+	 *
+	 * @param string $text Text to trim.
+	 * @return string
+	 */
+	private static function trim_start_to_word_boundary( $text ) {
+		if ( '' === $text ) {
+			return '';
+		}
+
+		// Find the first whitespace character.
+		$boundary = self::mb_strcspn( $text, " \t\n\r", 'UTF-8' );
+
+		// If the entire text is one word, keep it.
+		if ( $boundary >= mb_strlen( $text, 'UTF-8' ) ) {
+			return $text;
+		}
+
+		// Trim to after the first whitespace and clean up.
+		$text = mb_substr( $text, $boundary, null, 'UTF-8' );
+		return ltrim( $text );
+	}
+
+	/**
+	 * Trim the end of text to the last word boundary.
+	 *
+	 * @param string $text Text to trim.
+	 * @return string
+	 */
+	private static function trim_end_to_word_boundary( $text ) {
+		if ( '' === $text ) {
+			return '';
+		}
+
+		// Find the last whitespace character by scanning backwards.
+		for ( $i = mb_strlen( $text, 'UTF-8' ) - 1; $i >= 0; $i-- ) {
+			$char = mb_substr( $text, $i, 1, 'UTF-8' );
+
+			if ( ' ' === $char || "\t" === $char || "\n" === $char || "\r" === $char ) {
+				$text = mb_substr( $text, 0, $i, 'UTF-8' );
+				return rtrim( $text );
+			}
+		}
+
+		// No whitespace found - the entire text is one word. Keep it.
+		return $text;
+	}
+
+	/**
+	 * Multibyte-safe strcspn: find the character offset of the first occurrence
+	 * of any character in a mask.
+	 *
+	 * @param string $haystack String to search.
+	 * @param string $mask     Characters to find.
+	 * @param string $encoding Character encoding.
+	 * @return int Character offset, or the length of the string if no match.
+	 */
+	private static function mb_strcspn( $haystack, $mask, $encoding ) {
+		$length = mb_strlen( $haystack, $encoding );
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = mb_substr( $haystack, $i, 1, $encoding );
+
+			if ( false !== mb_strpos( $mask, $char, 0, $encoding ) ) {
+				return $i;
+			}
+		}
+
+		return $length;
 	}
 
 	/**
