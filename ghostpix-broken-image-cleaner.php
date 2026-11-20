@@ -3,7 +3,7 @@
  * Plugin Name:       Ghostpix Broken Image Cleaner
  * Plugin URI:        https://github.com/haritpanchal/ghostpix-broken-image-cleaner
  * Description:       Finds images in post content whose files are missing from the uploads folder, and removes them safely — after review, with one-click undo.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
  * Author:            Harit Panchal
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BROKEN_IMAGE_CLEANER_VERSION', '1.0.0' );
+define( 'BROKEN_IMAGE_CLEANER_VERSION', '1.1.0' );
 define( 'BROKEN_IMAGE_CLEANER_FILE', __FILE__ );
 define( 'BROKEN_IMAGE_CLEANER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BROKEN_IMAGE_CLEANER_URL', plugin_dir_url( __FILE__ ) );

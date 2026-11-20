@@ -1,0 +1,45 @@
+name: Deploy to WordPress.org
+
+# Runs when a GitHub release is published (not for drafts or pre-releases).
+# Requires the repository secrets SVN_USERNAME and SVN_PASSWORD.
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy to WP.org
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # The plugin has no runtime Composer dependencies (vendor/ is dev-only and
+      # excluded by .distignore), so no `composer install` step is needed.
+
+      # The action uses the tag name as the SVN tag. Strip a leading "v" so a
+      # release tagged v1.1.0 is deployed as 1.1.0.
+      - name: Work out the version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: WordPress plugin deploy
+        id: deploy
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          generate-zip: true
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: ghostpix-broken-image-cleaner
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Attach zip to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.deploy.outputs.zip-path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
