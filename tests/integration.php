@@ -72,6 +72,9 @@ foreach ( array( 'gone-bare.jpg', 'gone-link.jpg', 'gone-caption.jpg', 'gone-fig
 	}
 }
 
+$longtext_before = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure ';
+$longtext_after  = ' dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum et cetera.';
+
 $content = <<<HTML
 <p>Opening paragraph.</p>
 <img src="{$url}/gone-bare.jpg" alt="bare" />
@@ -88,6 +91,8 @@ $content = <<<HTML
 <p>A responsive image whose largest size is gone. The image still displays, so it must survive:</p>
 <img src="{$url}/fine.jpg" srcset="{$url}/fine.jpg 640w, {$url}/gone-large.jpg 1280w" sizes="100vw" alt="responsive" />
 <p>Closing paragraph with a [shortcode attr="1"].</p>
+<p>Context snippet with Unicode: Thе quick brown fox jumps över thе lazy dög. Some text before <img src="{$url}/gone-unicode.jpg" alt="unicode" /> and some text after with émojis 🎉 and accénts.</p>
+<p>Very long context to test the 200-character limit: {$longtext_before}<img src="{$url}/gone-long.jpg" alt="long" />{$longtext_after}</p>
 HTML;
 
 $post_id = wp_insert_post(
@@ -130,7 +135,7 @@ ksort( $reasons );
 
 $check(
 	'flags each missing file, the missing thumbnail and the dead srcset candidate',
-	'gone-bare.jpg=file_missing, gone-caption.jpg=file_missing, gone-figure.jpg=file_missing, gone-large.jpg=srcset_missing, gone-link.jpg=file_missing, photo-150x150.jpg=size_missing',
+	'gone-bare.jpg=file_missing, gone-caption.jpg=file_missing, gone-figure.jpg=file_missing, gone-large.jpg=srcset_missing, gone-link.jpg=file_missing, gone-long.jpg=file_missing, gone-unicode.jpg=file_missing, photo-150x150.jpg=size_missing',
 	implode(
 		', ',
 		array_map(
@@ -167,6 +172,96 @@ $check(
 	)
 );
 
+// Snippets should not have ellipses adjacent to whitespace. An ellipsis
+// marks a clipped edge, and the edge should be trimmed to a word boundary.
+// Good: "…word" or "word…". Bad: "… word" or "word …".
+$bad_boundaries = array_filter(
+	$rows,
+	function ( $row ) {
+		$snippet = $row->context_snippet;
+
+		// Check for ellipsis followed by whitespace (bad start trim).
+		if ( preg_match( '/^…\s/', $snippet ) ) {
+			return true;
+		}
+
+		// Check for whitespace followed by ellipsis (bad end trim).
+		if ( preg_match( '/\s…$/', $snippet ) ) {
+			return true;
+		}
+
+		return false;
+	}
+);
+
+$check(
+	'no context snippet has ellipsis adjacent to whitespace',
+	array(),
+	array_map(
+		function ( $row ) {
+			return $row->context_snippet;
+		},
+		$bad_boundaries
+	)
+);
+
+// Check for double ellipsis (our ellipsis plus wp_html_excerpt's).
+$double_ellipsis = array_filter(
+	$rows,
+	function ( $row ) {
+		$snippet = $row->context_snippet;
+
+		return false !== strpos( $snippet, '……' ) || false !== strpos( $snippet, '… …' );
+	}
+);
+
+$check(
+	'no context snippet has a double ellipsis',
+	array(),
+	array_map(
+		function ( $row ) {
+			return $row->context_snippet;
+		},
+		$double_ellipsis
+	)
+);
+
+// Check multibyte handling: the Unicode test image should have a snippet with
+// Unicode characters that are not corrupted.
+if ( isset( $rows['gone-unicode.jpg'] ) ) {
+	$unicode_snippet = $rows['gone-unicode.jpg']->context_snippet;
+
+	$check(
+		'Unicode snippet contains expected multibyte characters',
+		true,
+		false !== mb_strpos( $unicode_snippet, 'över', 0, 'UTF-8' ) || false !== mb_strpos( $unicode_snippet, 'émojis', 0, 'UTF-8' )
+	);
+
+	$check(
+		'Unicode snippet is not corrupted (no replacement characters)',
+		false,
+		false !== strpos( $unicode_snippet, '�' )
+	);
+}
+
+// Check long snippet: it should be truncated to around 200 characters.
+if ( isset( $rows['gone-long.jpg'] ) ) {
+	$long_snippet = $rows['gone-long.jpg']->context_snippet;
+	$length       = mb_strlen( $long_snippet, 'UTF-8' );
+
+	$check(
+		'long snippet is truncated to approximately 200 characters',
+		true,
+		$length <= 210
+	);
+
+	$check(
+		'long snippet still has both ellipses marking truncation',
+		true,
+		preg_match( '/^…/', $long_snippet ) && preg_match( '/…$/', $long_snippet )
+	);
+}
+
 WP_CLI::log( '' );
 WP_CLI::log( 'Removal' );
 
@@ -181,7 +276,7 @@ foreach ( $rows as $name => $row ) {
 $report  = Remover::remove( $remove_ids );
 $cleaned = get_post( $post_id )->post_content;
 
-$check( 'five references were removed', 5, (int) $report['images_removed'] );
+$check( 'seven references were removed', 7, (int) $report['images_removed'] );
 $check( 'one post was edited', 1, (int) $report['posts_changed'] );
 $check( 'no errors were reported', array(), $report['errors'] );
 
